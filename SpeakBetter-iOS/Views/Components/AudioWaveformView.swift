@@ -126,11 +126,14 @@ struct RealtimeAudioVisualizerView: View {
     @State private var animationCounter = 0
     
     var body: some View {
-        VStack(spacing: 4) {
-            // Removed status text to avoid duplication
-
+        VStack(spacing: 8) {
+            Text(isRecording ? "Recording in progress..." : "Ready to record")
+                .font(.headline)
+                .foregroundColor(isRecording ? .red : .secondary)
+                .padding(.bottom, 4)
+            
             ZStack {
-                // Background circles - made consistent size
+                // Background circles
                 ForEach(0..<3) { i in
                     Circle()
                         .stroke(Color.blue.opacity(isRecording ? 0.2 : 0.1), lineWidth: 2)
@@ -162,30 +165,30 @@ struct RealtimeAudioVisualizerView: View {
                     }
                 }
             }
-            .frame(height: 120) // Reduced height to prevent layout shifts
+            .frame(height: 150)
             
-            // Audio level meter if recording - simplified and made more visible
+            // Audio level meter if recording
             if isRecording, let audioData = audioLevelData {
                 VStack(spacing: 2) {
-                    // Audio level meter - more prominent design
+                    // Audio level meter
                     GeometryReader { geometry in
                         ZStack(alignment: .leading) {
                             // Background
                             Rectangle()
                                 .fill(Color.gray.opacity(0.2))
-                                .cornerRadius(4)
-                                .frame(height: 8)
+                                .cornerRadius(3)
                             
                             // Level indicator
                             Rectangle()
                                 .fill(levelColor(for: audioData.normalizedValue))
-                                .frame(width: geometry.size.width * CGFloat(audioData.normalizedValue), height: 8)
-                                .cornerRadius(4)
+                                .frame(width: geometry.size.width * CGFloat(audioData.normalizedValue))
+                                .cornerRadius(3)
                         }
+                        .frame(height: 6)
                     }
-                    .frame(height: 8)
+                    .frame(height: 6)
                     
-                    // Labels - simplified
+                    // Labels
                     HStack {
                         Text("Low")
                             .font(.caption2)
@@ -193,12 +196,9 @@ struct RealtimeAudioVisualizerView: View {
                         
                         Spacer()
                         
-                        // Only show this when actively speaking
-                        if audioData.isSpeaking && audioData.normalizedValue > 0.2 {
-                            Text("Speaking")
-                                .font(.caption2)
-                                .foregroundColor(.red)
-                        }
+                        Text(audioData.isSpeaking ? "Speaking" : "Silent")
+                            .font(.caption2)
+                            .foregroundColor(audioData.isSpeaking ? .blue : .secondary)
                         
                         Spacer()
                         
@@ -207,7 +207,7 @@ struct RealtimeAudioVisualizerView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal)
                 .padding(.top, 8)
             }
         }

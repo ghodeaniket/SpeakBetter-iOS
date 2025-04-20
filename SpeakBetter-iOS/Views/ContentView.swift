@@ -11,8 +11,8 @@ struct ContentView: View {
         NavigationView {
             ZStack {
                 // Main content
-                VStack(spacing: 12) {
-                    // Header with app logo - fixed spacing
+                VStack(spacing: 16) {
+                    // Header with app logo
                     HStack {
                         Image(systemName: "waveform.circle.fill")
                             .font(.system(size: 32))
@@ -22,28 +22,50 @@ struct ContentView: View {
                             .font(.title)
                             .fontWeight(.bold)
                     }
-                    .padding(.top, 8)
-                    .padding(.bottom, 4)
+                    .padding(.top)
                     
-                    // Status text below header (replaces status in RealtimeAudioVisualizerView)
-                    Text(viewModel.isRecording ? "Recording in progress..." : "Ready to record")
-                        .font(.headline)
-                        .foregroundColor(viewModel.isRecording ? .red : .secondary)
+                    // Enhanced audio visualization
+                    RealtimeAudioVisualizerView(
+                        isRecording: viewModel.isRecording,
+                        audioLevelData: viewModel.currentAudioData
+                    )
+                    .frame(height: 180)
+                    .padding(.horizontal)
                     
-                    // Enhanced audio visualization - removed internal status text
-                    ZStack {
-                        // Audio visualization with fixed height to prevent layout jumps
-                        RealtimeAudioVisualizerView(
-                            isRecording: viewModel.isRecording,
-                            audioLevelData: viewModel.currentAudioData
-                        )
-                        .frame(height: 170)
-                        .padding(.horizontal)
+                    // Recording status
+                    HStack {
+                        if viewModel.isRecording {
+                            // Recording animation
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 12, height: 12)
+                                .modifier(PulseEffect())
+                            
+                            Text("Recording in progress...")
+                                .font(.headline)
+                        } else if viewModel.isAnalyzing {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                                .padding(.trailing, 4)
+                            
+                            Text("Analyzing speech...")
+                                .font(.headline)
+                        } else {
+                            Image(systemName: "mic.slash")
+                                .foregroundColor(.gray)
+                                .padding(.trailing, 4)
+                            
+                            Text("Ready to record")
+                                .font(.headline)
+                        }
                     }
-                    .frame(height: 170) // Fixed frame to prevent layout shifts
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(20)
                     
-                    // Transcription display - fixed height to prevent layout shifts
-                    VStack(alignment: .leading, spacing: 4) {
+                    // Transcription display
+                    VStack(alignment: .leading, spacing: 6) {
                         Text("Transcription")
                             .font(.headline)
                             .foregroundColor(.secondary)
@@ -52,20 +74,17 @@ struct ContentView: View {
                             Text(viewModel.transcription.isEmpty ? "Your speech will appear here in real-time as you speak..." : viewModel.transcription)
                                 .padding()
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                // Disable animation to prevent layout issues
-                                .fixedSize(horizontal: false, vertical: true)
+                                .animation(.default, value: viewModel.transcription)
                         }
-                        .frame(height: 120) // Fixed height instead of maxHeight
+                        .frame(maxHeight: 150)
                         .background(Color(.systemGray6))
                         .cornerRadius(10)
                     }
                     .padding(.horizontal)
-                    .frame(height: 160) // Fixed overall height
                     
                     Spacer()
-                    .frame(height: 10) // Fixed spacer height
                     
-                    // Record/Stop button - consistent size and appearance
+                    // Record/Stop button
                     Button(action: {
                         if viewModel.isRecording {
                             viewModel.stopRecording()
@@ -86,16 +105,15 @@ struct ContentView: View {
                     }
                     .disabled(viewModel.isAnalyzing)
                     .opacity(viewModel.isAnalyzing ? 0.7 : 1.0)
-                    .frame(height: 80) // Fixed height
                     
-                    // Button label - fixed height
+                    // Button label
                     Text(viewModel.isRecording ? "Tap to stop recording" : "Tap to start recording")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-                        .frame(height: 20) // Fixed height
+                        .padding(.top, 4)
                     
-                    // Usage instructions - fixed height to prevent layout shifts
-                    VStack(alignment: .leading, spacing: 8) {
+                    // Usage instructions
+                    VStack(alignment: .leading, spacing: 12) {
                         Text("Tips for best results:")
                             .font(.headline)
                             .foregroundColor(.primary)
@@ -104,13 +122,11 @@ struct ContentView: View {
                         InstructionRow(number: "2", text: "Aim for 30 seconds to 3 minutes")
                         InstructionRow(number: "3", text: "Try to face your device directly")
                     }
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 16)
+                    .padding()
                     .background(Color(.systemGray6))
                     .cornerRadius(16)
                     .padding(.horizontal)
-                    .padding(.bottom, 16)
-                    .frame(height: 140) // Fixed height
+                    .padding(.bottom)
                 }
                 
                 // Overlay for analyzing state
