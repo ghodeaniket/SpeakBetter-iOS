@@ -1,0 +1,567 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		256C6A1C2DB4E2AA003B19A9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 256C6A032DB4E2A9003B19A9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 256C6A0A2DB4E2A9003B19A9;
+			remoteInfo = "SpeakBetter-iOS";
+		};
+		256C6A262DB4E2AA003B19A9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 256C6A032DB4E2A9003B19A9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 256C6A0A2DB4E2A9003B19A9;
+			remoteInfo = "SpeakBetter-iOS";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		256C6A0B2DB4E2A9003B19A9 /* SpeakBetter-iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SpeakBetter-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		256C6A1B2DB4E2AA003B19A9 /* SpeakBetter-iOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SpeakBetter-iOSTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		256C6A252DB4E2AA003B19A9 /* SpeakBetter-iOSUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SpeakBetter-iOSUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		256C6A0D2DB4E2A9003B19A9 /* SpeakBetter-iOS */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "SpeakBetter-iOS";
+			sourceTree = "<group>";
+		};
+		256C6A1E2DB4E2AA003B19A9 /* SpeakBetter-iOSTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "SpeakBetter-iOSTests";
+			sourceTree = "<group>";
+		};
+		256C6A282DB4E2AA003B19A9 /* SpeakBetter-iOSUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "SpeakBetter-iOSUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		256C6A082DB4E2A9003B19A9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		256C6A182DB4E2AA003B19A9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		256C6A222DB4E2AA003B19A9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		256C6A022DB4E2A9003B19A9 = {
+			isa = PBXGroup;
+			children = (
+				256C6A0D2DB4E2A9003B19A9 /* SpeakBetter-iOS */,
+				256C6A1E2DB4E2AA003B19A9 /* SpeakBetter-iOSTests */,
+				256C6A282DB4E2AA003B19A9 /* SpeakBetter-iOSUITests */,
+				256C6A0C2DB4E2A9003B19A9 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		256C6A0C2DB4E2A9003B19A9 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				256C6A0B2DB4E2A9003B19A9 /* SpeakBetter-iOS.app */,
+				256C6A1B2DB4E2AA003B19A9 /* SpeakBetter-iOSTests.xctest */,
+				256C6A252DB4E2AA003B19A9 /* SpeakBetter-iOSUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		256C6A0A2DB4E2A9003B19A9 /* SpeakBetter-iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 256C6A2F2DB4E2AA003B19A9 /* Build configuration list for PBXNativeTarget "SpeakBetter-iOS" */;
+			buildPhases = (
+				256C6A072DB4E2A9003B19A9 /* Sources */,
+				256C6A082DB4E2A9003B19A9 /* Frameworks */,
+				256C6A092DB4E2A9003B19A9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				256C6A0D2DB4E2A9003B19A9 /* SpeakBetter-iOS */,
+			);
+			name = "SpeakBetter-iOS";
+			packageProductDependencies = (
+			);
+			productName = "SpeakBetter-iOS";
+			productReference = 256C6A0B2DB4E2A9003B19A9 /* SpeakBetter-iOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		256C6A1A2DB4E2AA003B19A9 /* SpeakBetter-iOSTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 256C6A322DB4E2AA003B19A9 /* Build configuration list for PBXNativeTarget "SpeakBetter-iOSTests" */;
+			buildPhases = (
+				256C6A172DB4E2AA003B19A9 /* Sources */,
+				256C6A182DB4E2AA003B19A9 /* Frameworks */,
+				256C6A192DB4E2AA003B19A9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				256C6A1D2DB4E2AA003B19A9 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				256C6A1E2DB4E2AA003B19A9 /* SpeakBetter-iOSTests */,
+			);
+			name = "SpeakBetter-iOSTests";
+			packageProductDependencies = (
+			);
+			productName = "SpeakBetter-iOSTests";
+			productReference = 256C6A1B2DB4E2AA003B19A9 /* SpeakBetter-iOSTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		256C6A242DB4E2AA003B19A9 /* SpeakBetter-iOSUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 256C6A352DB4E2AA003B19A9 /* Build configuration list for PBXNativeTarget "SpeakBetter-iOSUITests" */;
+			buildPhases = (
+				256C6A212DB4E2AA003B19A9 /* Sources */,
+				256C6A222DB4E2AA003B19A9 /* Frameworks */,
+				256C6A232DB4E2AA003B19A9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				256C6A272DB4E2AA003B19A9 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				256C6A282DB4E2AA003B19A9 /* SpeakBetter-iOSUITests */,
+			);
+			name = "SpeakBetter-iOSUITests";
+			packageProductDependencies = (
+			);
+			productName = "SpeakBetter-iOSUITests";
+			productReference = 256C6A252DB4E2AA003B19A9 /* SpeakBetter-iOSUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		256C6A032DB4E2A9003B19A9 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1610;
+				LastUpgradeCheck = 1610;
+				TargetAttributes = {
+					256C6A0A2DB4E2A9003B19A9 = {
+						CreatedOnToolsVersion = 16.1;
+					};
+					256C6A1A2DB4E2AA003B19A9 = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = 256C6A0A2DB4E2A9003B19A9;
+					};
+					256C6A242DB4E2AA003B19A9 = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = 256C6A0A2DB4E2A9003B19A9;
+					};
+				};
+			};
+			buildConfigurationList = 256C6A062DB4E2A9003B19A9 /* Build configuration list for PBXProject "SpeakBetter-iOS" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 256C6A022DB4E2A9003B19A9;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 256C6A0C2DB4E2A9003B19A9 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				256C6A0A2DB4E2A9003B19A9 /* SpeakBetter-iOS */,
+				256C6A1A2DB4E2AA003B19A9 /* SpeakBetter-iOSTests */,
+				256C6A242DB4E2AA003B19A9 /* SpeakBetter-iOSUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		256C6A092DB4E2A9003B19A9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		256C6A192DB4E2AA003B19A9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		256C6A232DB4E2AA003B19A9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		256C6A072DB4E2A9003B19A9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		256C6A172DB4E2AA003B19A9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		256C6A212DB4E2AA003B19A9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		256C6A1D2DB4E2AA003B19A9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 256C6A0A2DB4E2A9003B19A9 /* SpeakBetter-iOS */;
+			targetProxy = 256C6A1C2DB4E2AA003B19A9 /* PBXContainerItemProxy */;
+		};
+		256C6A272DB4E2AA003B19A9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 256C6A0A2DB4E2A9003B19A9 /* SpeakBetter-iOS */;
+			targetProxy = 256C6A262DB4E2AA003B19A9 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		256C6A2D2DB4E2AA003B19A9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		256C6A2E2DB4E2AA003B19A9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		256C6A302DB4E2AA003B19A9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"SpeakBetter-iOS/Preview Content\"";
+				DEVELOPMENT_TEAM = 7M848FL347;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "SpeakBetter needs access to your microphone to record and analyze your speech.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "SpeakBetter uses speech recognition to provide feedback on your speaking skills.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.cognitoapps.SpeakBetter-iOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		256C6A312DB4E2AA003B19A9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"SpeakBetter-iOS/Preview Content\"";
+				DEVELOPMENT_TEAM = 7M848FL347;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "SpeakBetter needs access to your microphone to record and analyze your speech.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "SpeakBetter uses speech recognition to provide feedback on your speaking skills.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.cognitoapps.SpeakBetter-iOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		256C6A332DB4E2AA003B19A9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7M848FL347;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.cognitoapps.SpeakBetter-iOSTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SpeakBetter-iOS.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SpeakBetter-iOS";
+			};
+			name = Debug;
+		};
+		256C6A342DB4E2AA003B19A9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7M848FL347;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.cognitoapps.SpeakBetter-iOSTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SpeakBetter-iOS.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SpeakBetter-iOS";
+			};
+			name = Release;
+		};
+		256C6A362DB4E2AA003B19A9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7M848FL347;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.cognitoapps.SpeakBetter-iOSUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "SpeakBetter-iOS";
+			};
+			name = Debug;
+		};
+		256C6A372DB4E2AA003B19A9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7M848FL347;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.cognitoapps.SpeakBetter-iOSUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "SpeakBetter-iOS";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		256C6A062DB4E2A9003B19A9 /* Build configuration list for PBXProject "SpeakBetter-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				256C6A2D2DB4E2AA003B19A9 /* Debug */,
+				256C6A2E2DB4E2AA003B19A9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		256C6A2F2DB4E2AA003B19A9 /* Build configuration list for PBXNativeTarget "SpeakBetter-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				256C6A302DB4E2AA003B19A9 /* Debug */,
+				256C6A312DB4E2AA003B19A9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		256C6A322DB4E2AA003B19A9 /* Build configuration list for PBXNativeTarget "SpeakBetter-iOSTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				256C6A332DB4E2AA003B19A9 /* Debug */,
+				256C6A342DB4E2AA003B19A9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		256C6A352DB4E2AA003B19A9 /* Build configuration list for PBXNativeTarget "SpeakBetter-iOSUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				256C6A362DB4E2AA003B19A9 /* Debug */,
+				256C6A372DB4E2AA003B19A9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 256C6A032DB4E2A9003B19A9 /* Project object */;
+}
