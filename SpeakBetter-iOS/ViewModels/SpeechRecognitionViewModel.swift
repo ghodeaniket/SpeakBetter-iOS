@@ -10,23 +10,54 @@ class SpeechRecognitionViewModel: ObservableObject {
     @Published var transcription = ""
     @Published var showPermissionAlert = false
     @Published var analysisResult: SpeechAnalysisResult?
+    @Published var audioLevel: CGFloat = 0.0           // Simple audio level (0.0-1.0 range)
+    @Published var currentAudioData: AudioLevelData?   // Detailed audio level data
+    @Published var isAnalyzing = false
+    
+    // Services
+    private let audioRecordingService = AudioRecordingService()
+    private let speechRecognitionService = SpeechRecognitionService()
+    private let speechAnalysisService = SpeechAnalysisService()
+    private let voiceAnalyticsService = VoiceAnalyticsService()
     
     // Private properties
-    private var audioEngine: AVAudioEngine?
-    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
-    private var recognitionTask: SFSpeechRecognitionTask?
-    private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
-    
+    private var cancellables = Set<AnyCancellable>()
+    private var audioLevelTimer: Timer?
+    private var recordingURL: URL?
     private var startTime: Date?
     private var recordingDuration: TimeInterval = 0
-    private var audioRecorder: AVAudioRecorder?
-    private var recordingURL: URL?
     
-    // Common filler words to detect
-    private let fillerWords = ["um", "uh", "like", "so", "you know", "actually", "basically", "literally", "right"]
-    
+    // Initialize
     init() {
-        // Initial setup
+        setupSubscriptions()
+    }
+    
+    // Set up Combine subscriptions
+    private func setupSubscriptions() {
+        // Subscribe to recording status changes
+        audioRecordingService.recordingStatus
+            .receive(on: RunLoop.main)
+            .sink { [weak self] isRecording in
+                self?.isRecording = isRecording
+                
+                if isRecording {
+                    self?.startAudioLevelMonitoring()
+                } else {
+                    self?.stopAudioLevelMonitoring()
+                }
+            }
+            .store(in: &cancellables)
+        
+        // Subscribe to transcription updates
+        speechRecognitionService.transcriptionPublisher
+            .receive(on: RunLoop.main)
+            .sink(
+                receiveCompletion: { _ in },
+                receiveValue: { [weak self] transcription in
+                    self?.transcription = transcription
+                }
+            )
+            .store(in: &cancellables)
     }
     
     // Check for speech recognition and microphone permissions
@@ -65,228 +96,180 @@ class SpeechRecognitionViewModel: ObservableObject {
     
     // Start recording and recognizing speech
     func startRecording() {
-        // Reset any previous recording
-        resetRecording()
+        // Start audio recording
+        recordingURL = audioRecordingService.startRecording()
         
-        // Set up audio session
-        let audioSession = AVAudioSession.sharedInstance()
-        do {
-            try audioSession.setCategory(.record, mode: .default)
-            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-        } catch {
-            print("Failed to set up audio session: \(error.localizedDescription)")
-            return
-        }
+        // Start speech recognition
+        speechRecognitionService.startLiveRecognition()
         
-        // Set up audio engine and request
-        audioEngine = AVAudioEngine()
-        recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
-        
-        guard let audioEngine = audioEngine,
-              let recognitionRequest = recognitionRequest,
-              let speechRecognizer = speechRecognizer,
-              speechRecognizer.isAvailable else {
-            print("Speech recognition not available")
-            return
-        }
-        
-        // Configure recognition request
-        recognitionRequest.shouldReportPartialResults = true
-        
-        // Set up recording URL for later analysis
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        recordingURL = documentsDirectory.appendingPathComponent("recording_\(Date().timeIntervalSince1970).wav")
-        
-        // Start recording
-        let inputNode = audioEngine.inputNode
-        let recordingFormat = inputNode.outputFormat(forBus: 0)
-        
-        // Install tap on input node
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
-            self?.recognitionRequest?.append(buffer)
-        }
-        
-        // Prepare and start audio engine
-        audioEngine.prepare()
-        
-        do {
-            try audioEngine.start()
-            startTime = Date()
-            isRecording = true
-        } catch {
-            print("Failed to start audio engine: \(error.localizedDescription)")
-            resetRecording()
-            return
-        }
-        
-        // Start recognition task
-        recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest) { [weak self] result, error in
-            guard let self = self else { return }
-            
-            if let result = result {
-                DispatchQueue.main.async {
-                    self.transcription = result.bestTranscription.formattedString
-                }
-            }
-            
-            if error != nil || (result?.isFinal ?? false) {
-                self.audioEngine?.stop()
-                inputNode.removeTap(onBus: 0)
-                self.recognitionRequest = nil
-                self.recognitionTask = nil
-            }
-        }
+        // Record start time
+        startTime = Date()
     }
     
     // Stop recording and analyze results
     func stopRecording() {
+        // Stop speech recognition
+        speechRecognitionService.stopLiveRecognition()
+        
+        // Stop audio recording
+        if let url = audioRecordingService.stopRecording() {
+            recordingURL = url
+        }
+        
         // Calculate recording duration
         if let startTime = startTime {
             recordingDuration = Date().timeIntervalSince(startTime)
         }
         
-        // Stop audio engine and recognition task
-        audioEngine?.stop()
-        audioEngine?.inputNode.removeTap(onBus: 0)
-        recognitionRequest?.endAudio()
-        
-        // Reset recording state
-        isRecording = false
-        
-        // Perform analysis on the transcription
-        analyzeTranscription()
+        // Start analysis process
+        analyzeRecording()
     }
     
-    // Reset recording state
-    private func resetRecording() {
-        audioEngine?.stop()
-        audioEngine?.inputNode.removeTap(onBus: 0)
-        recognitionTask?.cancel()
-        recognitionRequest?.endAudio()
+    // Analyze the recorded speech
+    private func analyzeRecording() {
+        guard let recordingURL = recordingURL else {
+            print("No recording URL available")
+            return
+        }
         
-        audioEngine = nil
-        recognitionRequest = nil
-        recognitionTask = nil
-        startTime = nil
-        recordingDuration = 0
-    }
-    
-    // Analyze the transcribed speech
-    private func analyzeTranscription() {
-        // For now, implement a simple analysis
-        // This would be expanded with SFVoiceAnalytics in a later phase
-        let words = transcription.split(separator: " ").map { String($0).lowercased() }
+        // Set analyzing flag
+        isAnalyzing = true
         
-        // Count total words
-        let totalWords = words.count
+        // Create a dispatch group to synchronize multiple analysis tasks
+        let analysisGroup = DispatchGroup()
         
-        // Calculate words per minute
-        let minutes = recordingDuration / 60.0
-        let wordsPerMinute = minutes > 0 ? Double(totalWords) / minutes : 0
-        
-        // Count filler words
-        var fillerWordCount = 0
-        var fillerWordsMap: [String: Int] = [:]
-        
-        for word in words {
-            if fillerWords.contains(word) {
-                fillerWordCount += 1
-                fillerWordsMap[word, default: 0] += 1
+        // 1. Get speech transcription (if not already available)
+        if transcription.isEmpty {
+            analysisGroup.enter()
+            speechRecognitionService.recognizeSpeechFromFile(url: recordingURL) { [weak self] result in
+                defer { analysisGroup.leave() }
+                
+                switch result {
+                case .success(let text):
+                    DispatchQueue.main.async {
+                        self?.transcription = text
+                    }
+                case .failure(let error):
+                    print("Transcription error: \(error.localizedDescription)")
+                }
             }
         }
         
-        // Create speech data
-        let speechData = SpeechData(
-            transcription: transcription,
-            wordsPerMinute: wordsPerMinute,
-            fillerWordCount: fillerWordCount,
-            fillerWords: fillerWordsMap,
-            durationInSeconds: recordingDuration
-        )
-        
-        // Generate feedback
-        generateFeedback(for: speechData)
-    }
-    
-    // Generate feedback based on speech analysis
-    private func generateFeedback(for speechData: SpeechData) {
-        // Pace rating
-        let paceRating: String
-        if speechData.wordsPerMinute < 120 {
-            paceRating = "Too slow"
-        } else if speechData.wordsPerMinute > 160 {
-            paceRating = "Too fast"
-        } else {
-            paceRating = "Good"
-        }
-        
-        // Filler word rating
-        let fillerRatio = speechData.durationInSeconds > 0 ? 
-            Double(speechData.fillerWordCount) / speechData.durationInSeconds * 60 : 0
-        
-        let fillerRating: String
-        if fillerRatio < 2 {
-            fillerRating = "Excellent"
-        } else if fillerRatio < 5 {
-            fillerRating = "Good"
-        } else {
-            fillerRating = "Needs improvement"
-        }
-        
-        // Overall score (simple algorithm for POC)
-        var score = 100
-        
-        // Deduct for pace
-        if paceRating != "Good" {
-            score -= 20
-        }
-        
-        // Deduct for filler words
-        if fillerRating == "Good" {
-            score -= 10
-        } else if fillerRating == "Needs improvement" {
-            score -= 30
-        }
-        
-        // Feedback points
-        var feedbackPoints: [String] = []
-        var suggestions: [String] = []
-        
-        // Add pace feedback
-        if paceRating == "Too slow" {
-            feedbackPoints.append("Your speaking pace was slower than optimal at \(Int(speechData.wordsPerMinute)) words per minute.")
-            suggestions.append("Try to increase your speaking pace slightly. Practice with a timer to develop a better sense of timing.")
-        } else if paceRating == "Too fast" {
-            feedbackPoints.append("Your speaking pace was faster than optimal at \(Int(speechData.wordsPerMinute)) words per minute.")
-            suggestions.append("Try to slow down slightly. Taking brief pauses between thoughts can help regulate your pace.")
-        } else {
-            feedbackPoints.append("Your speaking pace was good at \(Int(speechData.wordsPerMinute)) words per minute.")
-        }
-        
-        // Add filler word feedback
-        if speechData.fillerWordCount > 0 {
-            let fillerList = speechData.fillerWords.map { "'\($0.key)' (\($0.value)x)" }.joined(separator: ", ")
-            feedbackPoints.append("You used \(speechData.fillerWordCount) filler words: \(fillerList)")
+        // 2. Analyze voice characteristics using SFVoiceAnalytics
+        var voiceAnalytics: [String: Any] = [:]
+        analysisGroup.enter()
+        voiceAnalyticsService.analyzeVoiceCharacteristics(from: recordingURL) { result in
+            defer { analysisGroup.leave() }
             
-            if fillerRating == "Needs improvement" {
-                suggestions.append("Practice being comfortable with silence instead of using filler words. Try pausing when you would typically say a filler word.")
+            switch result {
+            case .success(let data):
+                voiceAnalytics = data
+            case .failure(let error):
+                print("Voice analytics error: \(error.localizedDescription)")
             }
-        } else {
-            feedbackPoints.append("Excellent job avoiding filler words!")
         }
         
-        // Create and publish analysis result
-        let result = SpeechAnalysisResult(
-            overallScore: score,
-            paceRating: paceRating,
-            fillerRating: fillerRating,
-            feedbackPoints: feedbackPoints,
-            suggestions: suggestions,
-            speechData: speechData
-        )
+        // 3. Detect pauses in the audio
+        analysisGroup.enter()
+        DispatchQueue.global().async { [weak self] in
+            guard let self = self else { analysisGroup.leave(); return }
+            
+            let pauses = self.speechAnalysisService.detectPauses(from: recordingURL)
+            voiceAnalytics["longPauses"] = pauses
+            
+            analysisGroup.leave()
+        }
+        
+        // When all analysis tasks are complete, generate the final result
+        analysisGroup.notify(queue: .main) { [weak self] in
+            guard let self = self else { return }
+            
+            // Analyze the speech using collected metrics
+            let words = self.transcription.split(separator: " ").map { String($0) }
+            let wordCount = words.count
+            
+            // Calculate speech metrics
+            let wordsPerMinute = self.recordingDuration > 0 ? 
+                Double(wordCount) / (self.recordingDuration / 60.0) : 0
+            
+            // Count filler words (using a more comprehensive list from the analysis service)
+            var fillerWordCount = 0
+            var fillerWordsMap: [String: Int] = [:]
+            
+            for word in words.map({ $0.lowercased() }) {
+                if self.speechAnalysisService.fillerWords.contains(word) {
+                    fillerWordCount += 1
+                    fillerWordsMap[word, default: 0] += 1
+                }
+            }
+            
+            // Combine all metrics
+            var metrics: [String: Any] = [
+                "wordCount": wordCount,
+                "wordsPerMinute": wordsPerMinute,
+                "fillerWordCount": fillerWordCount,
+                "fillerWords": fillerWordsMap,
+                "duration": self.recordingDuration
+            ]
+            
+            // Add voice analytics metrics
+            metrics.merge(voiceAnalytics) { (_, new) in new }
+            
+            // Generate the analysis result
+            let result = self.speechAnalysisService.analyzeTranscription(
+                self.transcription,
+                metrics: metrics,
+                audioURL: recordingURL
+            )
+            
+            // Update the UI
+            DispatchQueue.main.async {
+                self.analysisResult = result
+                self.isAnalyzing = false
+            }
+        }
+    }
+    
+    // Audio level monitoring for visualization
+    private func startAudioLevelMonitoring() {
+        // Subscribe to detailed audio level data
+        audioRecordingService.audioLevels
+            .receive(on: RunLoop.main)
+            .sink { [weak self] audioData in
+                guard let self = self else { return }
+                self.audioLevel = CGFloat(audioData.normalizedValue)
+                self.currentAudioData = audioData
+            }
+            .store(in: &cancellables)
+            
+        // Fallback timer-based polling in case the publisher isn't available
+        audioLevelTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+            guard let self = self, self.currentAudioData == nil else { return }
+            
+            // Get audio metrics
+            if let audioMetrics = self.audioRecordingService.getAudioMetrics() {
+                DispatchQueue.main.async {
+                    self.audioLevel = CGFloat(audioMetrics.normalizedValue)
+                    self.currentAudioData = audioMetrics
+                }
+            } else {
+                // Fallback to basic level
+                let level = self.audioRecordingService.getAudioLevels()
+                
+                DispatchQueue.main.async {
+                    self.audioLevel = CGFloat(level)
+                }
+            }
+        }
+    }
+    
+    private func stopAudioLevelMonitoring() {
+        audioLevelTimer?.invalidate()
+        audioLevelTimer = nil
         
         DispatchQueue.main.async {
-            self.analysisResult = result
+            self.audioLevel = 0.0
+            self.currentAudioData = nil
         }
     }
 }

@@ -1,6 +1,7 @@
 import SwiftUI
 import AVFoundation
 import Speech
+import Combine
 
 struct ContentView: View {
     @StateObject private var viewModel = SpeechRecognitionViewModel()
@@ -8,95 +9,156 @@ struct ContentView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
-                // Header
-                Text("SpeakBetter AI Coach")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .padding(.top)
-                
-                Spacer()
-                
-                // Recording status indicator
-                HStack {
-                    Circle()
-                        .fill(viewModel.isRecording ? Color.red : Color.gray)
-                        .frame(width: 20, height: 20)
-                    
-                    Text(viewModel.isRecording ? "Recording in progress..." : "Ready to record")
-                        .font(.headline)
-                }
-                
-                // Transcription display
-                ScrollView {
-                    Text(viewModel.transcription.isEmpty ? "Your speech will appear here..." : viewModel.transcription)
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .frame(height: 200)
-                .background(Color(.systemGray6))
-                .cornerRadius(10)
-                .padding()
-                
-                // Record button
-                Button(action: {
-                    if viewModel.isRecording {
-                        viewModel.stopRecording()
-                        showingAnalysisResult = viewModel.analysisResult != nil
-                    } else {
-                        viewModel.startRecording()
-                    }
-                }) {
+            ZStack {
+                // Main content
+                VStack(spacing: 16) {
+                    // Header with app logo
                     HStack {
-                        Image(systemName: viewModel.isRecording ? "stop.circle.fill" : "mic.circle.fill")
-                            .font(.system(size: 24))
+                        Image(systemName: "waveform.circle.fill")
+                            .font(.system(size: 32))
+                            .foregroundColor(.blue)
                         
-                        Text(viewModel.isRecording ? "Stop Recording" : "Start Recording")
+                        Text("SpeakBetter AI Coach")
+                            .font(.title)
+                            .fontWeight(.bold)
+                    }
+                    .padding(.top)
+                    
+                    // Enhanced audio visualization
+                    RealtimeAudioVisualizerView(
+                        isRecording: viewModel.isRecording,
+                        audioLevelData: viewModel.currentAudioData
+                    )
+                    .frame(height: 180)
+                    .padding(.horizontal)
+                    
+                    // Recording status
+                    HStack {
+                        if viewModel.isRecording {
+                            // Recording animation
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 12, height: 12)
+                                .modifier(PulseEffect())
+                            
+                            Text("Recording in progress...")
+                                .font(.headline)
+                        } else if viewModel.isAnalyzing {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                                .padding(.trailing, 4)
+                            
+                            Text("Analyzing speech...")
+                                .font(.headline)
+                        } else {
+                            Image(systemName: "mic.slash")
+                                .foregroundColor(.gray)
+                                .padding(.trailing, 4)
+                            
+                            Text("Ready to record")
+                                .font(.headline)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(20)
+                    
+                    // Transcription display
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Transcription")
                             .font(.headline)
+                            .foregroundColor(.secondary)
+                        
+                        ScrollView {
+                            Text(viewModel.transcription.isEmpty ? "Your speech will appear here in real-time as you speak..." : viewModel.transcription)
+                                .padding()
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .animation(.default, value: viewModel.transcription)
+                        }
+                        .frame(maxHeight: 150)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(10)
+                    }
+                    .padding(.horizontal)
+                    
+                    Spacer()
+                    
+                    // Record/Stop button
+                    Button(action: {
+                        if viewModel.isRecording {
+                            viewModel.stopRecording()
+                        } else {
+                            viewModel.startRecording()
+                        }
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(viewModel.isRecording ? Color.red : Color.blue)
+                                .frame(width: 80, height: 80)
+                                .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 3)
+                            
+                            Image(systemName: viewModel.isRecording ? "stop.fill" : "mic.fill")
+                                .font(.system(size: 32))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .disabled(viewModel.isAnalyzing)
+                    .opacity(viewModel.isAnalyzing ? 0.7 : 1.0)
+                    
+                    // Button label
+                    Text(viewModel.isRecording ? "Tap to stop recording" : "Tap to start recording")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 4)
+                    
+                    // Usage instructions
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Tips for best results:")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                        
+                        InstructionRow(number: "1", text: "Speak clearly in a quiet environment")
+                        InstructionRow(number: "2", text: "Aim for 30 seconds to 3 minutes")
+                        InstructionRow(number: "3", text: "Try to face your device directly")
                     }
                     .padding()
-                    .foregroundColor(.white)
-                    .background(viewModel.isRecording ? Color.red : Color.blue)
-                    .cornerRadius(10)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(16)
+                    .padding(.horizontal)
+                    .padding(.bottom)
                 }
                 
-                // Usage instructions
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("How to use:")
-                        .font(.headline)
-                    
-                    HStack(alignment: .top) {
-                        Text("1.")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        Text("Tap the Start Recording button and speak clearly")
-                            .font(.subheadline)
+                // Overlay for analyzing state
+                if viewModel.isAnalyzing {
+                    VStack {
+                        Spacer()
+                        
+                        // Results processing indicator
+                        VStack(spacing: 16) {
+                            ProgressView()
+                                .scaleEffect(1.5)
+                            
+                            Text("Analyzing your speech...")
+                                .font(.headline)
+                            
+                            Text("This will just take a moment")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(30)
+                        .background(Color(.systemBackground))
+                        .cornerRadius(16)
+                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+                        .padding(.horizontal, 40)
+                        
+                        Spacer()
                     }
-                    
-                    HStack(alignment: .top) {
-                        Text("2.")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        Text("Speak for 30 seconds to 3 minutes")
-                            .font(.subheadline)
-                    }
-                    
-                    HStack(alignment: .top) {
-                        Text("3.")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        Text("Tap Stop Recording to get instant feedback")
-                            .font(.subheadline)
-                    }
+                    .background(Color.black.opacity(0.2))
+                    .ignoresSafeArea()
                 }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(10)
-                .padding(.horizontal)
-                
-                Spacer()
             }
-            .padding()
             .navigationBarTitle("", displayMode: .inline)
             .alert(isPresented: $viewModel.showPermissionAlert) {
                 Alert(
@@ -110,6 +172,11 @@ struct ContentView: View {
                     secondaryButton: .cancel()
                 )
             }
+            .onChange(of: viewModel.analysisResult != nil) { hasResult in
+                if hasResult {
+                    showingAnalysisResult = true
+                }
+            }
             .sheet(isPresented: $showingAnalysisResult) {
                 if let result = viewModel.analysisResult {
                     AnalysisResultView(result: result)
@@ -118,6 +185,41 @@ struct ContentView: View {
         }
         .onAppear {
             viewModel.checkPermission()
+        }
+    }
+}
+
+// Animation and visual components are now in separate files
+
+// Pulse animation for recording indicator
+struct PulseEffect: ViewModifier {
+    @State private var pulsate = false
+    
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(pulsate ? 1.2 : 1.0)
+            .opacity(pulsate ? 0.7 : 1.0)
+            .animation(Animation.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: pulsate)
+            .onAppear {
+                pulsate = true
+            }
+    }
+}
+
+// Instruction row component
+struct InstructionRow: View {
+    let number: String
+    let text: String
+    
+    var body: some View {
+        HStack(alignment: .top) {
+            Text(number)
+                .font(.subheadline)
+                .foregroundColor(.blue)
+                .frame(width: 20, alignment: .center)
+            
+            Text(text)
+                .font(.subheadline)
         }
     }
 }

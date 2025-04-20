@@ -13,11 +13,23 @@ class AudioRecordingService {
     private var startTime: Date?
     private var recordingDuration: TimeInterval = 0
     
-    // Publisher for recording status
+    // Audio level history for visualization
+    private var audioLevelHistory: [Float] = []
+    private let maxHistoryItems = 50
+    
+    // Publishers
     private let recordingStatusSubject = PassthroughSubject<Bool, Never>()
     var recordingStatus: AnyPublisher<Bool, Never> {
         return recordingStatusSubject.eraseToAnyPublisher()
     }
+    
+    private let audioLevelsSubject = PassthroughSubject<AudioLevelData, Never>()
+    var audioLevels: AnyPublisher<AudioLevelData, Never> {
+        return audioLevelsSubject.eraseToAnyPublisher()
+    }
+    
+    // Audio level monitoring timer
+    private var levelMonitorTimer: Timer?
     
     // Initialize the service
     init() {
@@ -57,12 +69,15 @@ class AudioRecordingService {
         let fileName = "recording_\(Date().timeIntervalSince1970).wav"
         let url = recordingsDirectory.appendingPathComponent(fileName)
         
-        // Configure recording settings
+        // Configure recording settings for high quality
         let settings: [String: Any] = [
             AVFormatIDKey: Int(kAudioFormatLinearPCM),
             AVSampleRateKey: 44100.0,
             AVNumberOfChannelsKey: 1,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue,
+            AVLinearPCMBitDepthKey: 16,
+            AVLinearPCMIsBigEndianKey: false,
+            AVLinearPCMIsFloatKey: false
         ]
         
         // Set up audio recorder
@@ -75,6 +90,13 @@ class AudioRecordingService {
                 startTime = Date()
                 recordingURL = url
                 recordingStatusSubject.send(true)
+                
+                // Reset audio level history
+                audioLevelHistory.removeAll()
+                
+                // Start monitoring audio levels
+                startAudioLevelMonitoring()
+                
                 return url
             }
         } catch {
@@ -98,6 +120,9 @@ class AudioRecordingService {
         // Stop recording
         recorder.stop()
         
+        // Stop level monitoring
+        stopAudioLevelMonitoring()
+        
         // Reset state
         audioRecorder = nil
         startTime = nil
@@ -111,13 +136,101 @@ class AudioRecordingService {
         return recordingDuration
     }
     
-    // Get audio levels for visualization
+    // Start monitoring audio levels at regular intervals
+    private func startAudioLevelMonitoring() {
+        // Stop any existing timer
+        stopAudioLevelMonitoring()
+        
+        // Create a new timer that fires 20 times per second
+        levelMonitorTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+            self?.updateAudioLevels()
+        }
+    }
+    
+    // Stop monitoring audio levels
+    private func stopAudioLevelMonitoring() {
+        levelMonitorTimer?.invalidate()
+        levelMonitorTimer = nil
+    }
+    
+    // Update and publish audio levels
+    private func updateAudioLevels() {
+        guard let recorder = audioRecorder else {
+            return
+        }
+        
+        // Update meters to get current values
+        recorder.updateMeters()
+        
+        // Get power values
+        let averagePower = recorder.averagePower(forChannel: 0)
+        let peakPower = recorder.peakPower(forChannel: 0)
+        
+        // Convert from dB to a normalized value (dB values are typically negative)
+        // -160 dB (very quiet) to 0 dB (maximum)
+        let normalizedAverage = 1.0 + (averagePower / 160.0) // Will be in 0 to 1 range
+        
+        // Add to history, keeping the size limited
+        audioLevelHistory.append(averagePower)
+        if audioLevelHistory.count > maxHistoryItems {
+            audioLevelHistory.removeFirst()
+        }
+        
+        // Calculate whether the current level is above speaking threshold
+        let isSpeaking = averagePower > -25.0 // Typical threshold for speech vs background noise
+        
+        // Create and publish the audio level data
+        let levelData = AudioLevelData(
+            averagePower: averagePower,
+            peakPower: peakPower,
+            normalizedValue: Float(normalizedAverage),
+            isSpeaking: isSpeaking,
+            levelHistory: audioLevelHistory
+        )
+        
+        audioLevelsSubject.send(levelData)
+    }
+    
+    // Get current audio levels for visualization (for direct polling)
     func getAudioLevels() -> Float {
         guard let recorder = audioRecorder else {
             return 0.0
         }
         
         recorder.updateMeters()
-        return recorder.averagePower(forChannel: 0)
+        let averagePower = recorder.averagePower(forChannel: 0)
+        
+        // Convert to normalized value
+        return 1.0 + (averagePower / 160.0)
     }
+    
+    // Get complete audio metrics
+    func getAudioMetrics() -> AudioLevelData? {
+        guard let recorder = audioRecorder else {
+            return nil
+        }
+        
+        recorder.updateMeters()
+        let averagePower = recorder.averagePower(forChannel: 0)
+        let peakPower = recorder.peakPower(forChannel: 0)
+        let normalizedAverage = 1.0 + (averagePower / 160.0)
+        let isSpeaking = averagePower > -25.0
+        
+        return AudioLevelData(
+            averagePower: averagePower,
+            peakPower: peakPower,
+            normalizedValue: Float(normalizedAverage),
+            isSpeaking: isSpeaking,
+            levelHistory: audioLevelHistory
+        )
+    }
+}
+
+// Audio level data structure
+struct AudioLevelData {
+    let averagePower: Float    // Raw dB value, typically negative
+    let peakPower: Float       // Raw dB peak value
+    let normalizedValue: Float // 0.0 to 1.0 range
+    let isSpeaking: Bool       // Whether current level is likely speech
+    let levelHistory: [Float]  // Recent history of levels
 }
