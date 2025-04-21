@@ -6,6 +6,15 @@ import Combine
 struct ContentView: View {
     @StateObject private var viewModel = SpeechRecognitionViewModel()
     @State private var showingAnalysisResult = false
+    @State private var recordingDuration: TimeInterval = 0
+    @State private var durationTimer: Timer?
+    
+    // Format the recording duration as MM:SS
+    private var formattedDuration: String {
+        let minutes = Int(recordingDuration) / 60
+        let seconds = Int(recordingDuration) % 60
+        return String(format: "%02d:%02d", minutes, seconds)
+    }
     
     var body: some View {
         NavigationView {
@@ -64,19 +73,35 @@ struct ContentView: View {
                     .background(Color(.systemGray6))
                     .cornerRadius(20)
                     
-                    // Transcription display
+                    // Enhanced transcription display with more space
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Transcription")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
+                        HStack {
+                            Text("Transcription")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            
+                            Spacer()
+                            
+                            // Add word count when there's content
+                            if !viewModel.transcription.isEmpty {
+                                Text("\(viewModel.transcription.split(separator: " ").count) words")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 2)
+                                    .background(Color.blue.opacity(0.1))
+                                    .cornerRadius(4)
+                            }
+                        }
                         
                         ScrollView {
                             Text(viewModel.transcription.isEmpty ? "Your speech will appear here in real-time as you speak..." : viewModel.transcription)
                                 .padding()
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .animation(.default, value: viewModel.transcription)
+                                .foregroundColor(viewModel.transcription.isEmpty ? .secondary : .primary)
                         }
-                        .frame(maxHeight: 150)
+                        .frame(minHeight: 200, maxHeight: .infinity)
                         .background(Color(.systemGray6))
                         .cornerRadius(10)
                     }
@@ -84,49 +109,49 @@ struct ContentView: View {
                     
                     Spacer()
                     
-                    // Record/Stop button
-                    Button(action: {
+                    // Improved record/stop button with better visual cues
+                    VStack(spacing: 10) {
+                        // Add recording duration if recording
                         if viewModel.isRecording {
-                            viewModel.stopRecording()
-                        } else {
-                            viewModel.startRecording()
+                            Text(formattedDuration)
+                                .font(.system(.title3, design: .monospaced))
+                                .foregroundColor(.red)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 4)
+                                .background(Color.red.opacity(0.1))
+                                .cornerRadius(8)
                         }
-                    }) {
-                        ZStack {
-                            Circle()
-                                .fill(viewModel.isRecording ? Color.red : Color.blue)
-                                .frame(width: 80, height: 80)
-                                .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 3)
-                            
-                            Image(systemName: viewModel.isRecording ? "stop.fill" : "mic.fill")
-                                .font(.system(size: 32))
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .disabled(viewModel.isAnalyzing)
-                    .opacity(viewModel.isAnalyzing ? 0.7 : 1.0)
-                    
-                    // Button label
-                    Text(viewModel.isRecording ? "Tap to stop recording" : "Tap to start recording")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .padding(.top, 4)
-                    
-                    // Usage instructions
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Tips for best results:")
-                            .font(.headline)
-                            .foregroundColor(.primary)
                         
-                        InstructionRow(number: "1", text: "Speak clearly in a quiet environment")
-                        InstructionRow(number: "2", text: "Aim for 30 seconds to 3 minutes")
-                        InstructionRow(number: "3", text: "Try to face your device directly")
+                        Button(action: {
+                            if viewModel.isRecording {
+                                viewModel.stopRecording()
+                            } else {
+                                viewModel.startRecording()
+                            }
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(viewModel.isRecording ? Color.red : Color.blue)
+                                    .frame(width: 80, height: 80)
+                                    .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 3)
+                                
+                                Image(systemName: viewModel.isRecording ? "stop.fill" : "mic.fill")
+                                    .font(.system(size: 32))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .disabled(viewModel.isAnalyzing)
+                        .opacity(viewModel.isAnalyzing ? 0.7 : 1.0)
+                        
+                        // Button label
+                        Text(viewModel.isRecording ? "Tap to stop recording" : "Tap to start recording")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
                     }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(16)
-                    .padding(.horizontal)
-                    .padding(.bottom)
+                    .padding(.vertical, 20)
+                    
+                    // Remove bottom instructions and add a small spacer instead
+                    Spacer(minLength: 20)
                 }
                 
                 // Overlay for analyzing state
@@ -185,6 +210,19 @@ struct ContentView: View {
         }
         .onAppear {
             viewModel.checkPermission()
+        }
+        .onChange(of: viewModel.isRecording) { isRecording in
+            if isRecording {
+                // Start the timer and reset duration
+                recordingDuration = 0
+                durationTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+                    recordingDuration += 1
+                }
+            } else {
+                // Stop the timer
+                durationTimer?.invalidate()
+                durationTimer = nil
+            }
         }
     }
 }
