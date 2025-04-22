@@ -270,7 +270,8 @@ struct VoiceMetricsView_Previews: PreviewProvider {
             pitch: 142.0,
             pitchVariability: 18.5,
             voicingPercentage: 0.78,
-            speechTimeline: []
+            speechTimeline: [],
+            metrics: ["wpmSource": "Manual calculation"]
         ))
         .padding()
         .previewLayout(.sizeThatFits)

@@ -136,19 +136,38 @@ class SpeechRecognitionViewModel: ObservableObject {
         // Set analyzing flag
         isAnalyzing = true
         
+        // Create a class to hold our analysis data that can be captured and modified by closures
+        class AnalysisData {
+            var transcription: String = ""
+            var voiceAnalytics: [String: Any] = [:]
+            var apiSpeakingRate: Double? = nil
+        }
+        
+        // Create shared data object
+        let analysisData = AnalysisData()
+        if !transcription.isEmpty {
+            analysisData.transcription = transcription
+        }
+        
         // Create a dispatch group to synchronize multiple analysis tasks
         let analysisGroup = DispatchGroup()
         
         // 1. Get speech transcription (if not already available)
         if transcription.isEmpty {
             analysisGroup.enter()
-            speechRecognitionService.recognizeSpeechFromFile(url: recordingURL) { [weak self] result in
+            speechRecognitionService.recognizeSpeechFromFile(url: recordingURL) { [weak self, analysisData] result in
                 defer { analysisGroup.leave() }
                 
                 switch result {
-                case .success(let text):
+                case .success(let (text, speakingRate)):
                     DispatchQueue.main.async {
                         self?.transcription = text
+                        analysisData.transcription = text
+                        
+                        // Store speaking rate if available
+                        if let speakingRate = speakingRate {
+                            analysisData.apiSpeakingRate = speakingRate
+                        }
                     }
                 case .failure(let error):
                     print("Transcription error: \(error.localizedDescription)")
@@ -157,14 +176,13 @@ class SpeechRecognitionViewModel: ObservableObject {
         }
         
         // 2. Analyze voice characteristics using SFVoiceAnalytics
-        var voiceAnalytics: [String: Any] = [:]
         analysisGroup.enter()
-        voiceAnalyticsService.analyzeVoiceCharacteristics(from: recordingURL) { result in
+        voiceAnalyticsService.analyzeVoiceCharacteristics(from: recordingURL) { [analysisData] result in
             defer { analysisGroup.leave() }
             
             switch result {
             case .success(let data):
-                voiceAnalytics = data
+                analysisData.voiceAnalytics = data
             case .failure(let error):
                 print("Voice analytics error: \(error.localizedDescription)")
             }
@@ -172,26 +190,25 @@ class SpeechRecognitionViewModel: ObservableObject {
         
         // 3. Detect pauses in the audio
         analysisGroup.enter()
-        DispatchQueue.global().async { [weak self] in
+        DispatchQueue.global().async { [weak self, analysisData] in
             guard let self = self else { analysisGroup.leave(); return }
             
             let pauses = self.speechAnalysisService.detectPauses(from: recordingURL)
-            voiceAnalytics["longPauses"] = pauses
+            analysisData.voiceAnalytics["longPauses"] = pauses
             
             analysisGroup.leave()
         }
         
         // When all analysis tasks are complete, generate the final result
-        analysisGroup.notify(queue: .main) { [weak self] in
+        analysisGroup.notify(queue: .main) { [weak self, analysisData] in
             guard let self = self else { return }
             
-            // Analyze the speech using collected metrics
-            let words = self.transcription.split(separator: " ").map { String($0) }
-            let wordCount = words.count
+            // Make sure we have the latest transcription
+            let finalTranscription = self.transcription.isEmpty ? analysisData.transcription : self.transcription
             
-            // Calculate speech metrics
-            let wordsPerMinute = self.recordingDuration > 0 ? 
-                Double(wordCount) / (self.recordingDuration / 60.0) : 0
+            // Analyze the speech using API metrics when available
+            let words = finalTranscription.split(separator: " ").map { String($0) }
+            let wordCount = words.count
             
             // Count filler words (using a more comprehensive list from the analysis service)
             var fillerWordCount = 0
@@ -204,21 +221,38 @@ class SpeechRecognitionViewModel: ObservableObject {
                 }
             }
             
+            // Let the speech recognition service analyze the metrics
+            // Pass the API speaking rate when available
+            let basicMetrics = self.speechRecognitionService.analyzeSpeech(
+                transcription: finalTranscription,
+                duration: self.recordingDuration,
+                apiSpeakingRate: analysisData.apiSpeakingRate
+            )
+            
             // Combine all metrics
-            var metrics: [String: Any] = [
-                "wordCount": wordCount,
-                "wordsPerMinute": wordsPerMinute,
-                "fillerWordCount": fillerWordCount,
-                "fillerWords": fillerWordsMap,
-                "duration": self.recordingDuration
-            ]
+            var metrics = basicMetrics
+            metrics["fillerWordCount"] = fillerWordCount
+            metrics["fillerWords"] = fillerWordsMap
+            metrics["duration"] = self.recordingDuration
+            
+            // If API provided a speaking rate, add it to metrics
+            if let apiRate = analysisData.apiSpeakingRate {
+                metrics["apiSpeakingRate"] = apiRate
+            }
             
             // Add voice analytics metrics
-            metrics.merge(voiceAnalytics) { (_, new) in new }
+            metrics.merge(analysisData.voiceAnalytics) { (_, new) in new }
+            
+            // Add debugging info about WPM source
+            if analysisData.apiSpeakingRate != nil {
+                metrics["wpmSource"] = "Apple Speech API"
+            } else {
+                metrics["wpmSource"] = "Manual calculation"
+            }
             
             // Generate the analysis result
             let result = self.speechAnalysisService.analyzeTranscription(
-                self.transcription,
+                finalTranscription,
                 metrics: metrics,
                 audioURL: recordingURL
             )

@@ -88,7 +88,8 @@ class SpeechAnalysisService {
             pitch: pitch,
             pitchVariability: pitchVariability,
             voicingPercentage: voicingPercentage,
-            speechTimeline: speechTimeline
+            speechTimeline: speechTimeline,
+            metrics: metrics // Include full metrics for debugging
         )
         
         // Return analysis result
@@ -415,23 +416,13 @@ class SpeechAnalysisService {
             var pitch: Double? = nil
             var volume: Double? = nil
             
-            // Extract pitch and volume if available
-            // Note: In iOS 14.5+, voiceAnalytics moved to SFSpeechRecognitionMetadata
-            if #available(iOS 14.5, *) {
-                // Use newer APIs if needed - in POC we'll use dummy values
-                // For production, we would need to access SFSpeechRecognitionMetadata
-                pitch = Double.random(in: 100...140)
-                volume = Double.random(in: 0.6...0.9)
-            } else if #available(iOS 13, *) {
-                // SFAcousticFeature doesn't have array-like properties as assumed
-                // We need a different approach to extract values
-                if let analytics = segment.voiceAnalytics {
-                    // Basic estimation using SFAcousticFeature
-                    // These would need refinement based on actual API behavior
-                    pitch = 120.0 // Placeholder value
-                    volume = 0.75 // Placeholder value
-                }
-            }
+            // In iOS 18+, we need to work with new API structure
+            // For consistency, use simulated values for pitch and volume
+            pitch = Double.random(in: 100...140)
+            volume = Double.random(in: 0.6...0.9)
+            
+            // Future improvement: When iOS 18 speech API is fully documented,
+            // extract actual pitch and volume data from the segment
             
             let timelineSegment = SpeechTimelineSegment(
                 text: text,

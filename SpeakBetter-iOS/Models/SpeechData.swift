@@ -18,6 +18,9 @@ struct SpeechData {
     // Speech timeline for visualization
     var speechTimeline: [SpeechTimelineSegment]
     
+    // Raw metrics data for debugging
+    var metrics: [String: Any]?
+    
     init(transcription: String = "",
          wordsPerMinute: Double = 0.0,
          fillerWordCount: Int = 0,
@@ -29,7 +32,8 @@ struct SpeechData {
          pitch: Double? = nil,
          pitchVariability: Double? = nil,
          voicingPercentage: Double? = nil,
-         speechTimeline: [SpeechTimelineSegment] = []) {
+         speechTimeline: [SpeechTimelineSegment] = [],
+         metrics: [String: Any]? = nil) {
         
         self.transcription = transcription
         self.wordsPerMinute = wordsPerMinute
@@ -43,6 +47,7 @@ struct SpeechData {
         self.pitchVariability = pitchVariability
         self.voicingPercentage = voicingPercentage
         self.speechTimeline = speechTimeline
+        self.metrics = metrics
     }
 }
 

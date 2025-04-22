@@ -3,7 +3,7 @@ import Speech
 import AVFoundation
 import Combine
 
-class VoiceAnalyticsService {
+class VoiceAnalyticsService: NSObject, SFSpeechRecognitionTaskDelegate {
     // Publishers for analytics data
     private let analyticsSubject = PassthroughSubject<[String: Any], Error>()
     var analyticsPublisher: AnyPublisher<[String: Any], Error> {
@@ -14,10 +14,62 @@ class VoiceAnalyticsService {
     private var recognizer: SFSpeechRecognizer?
     private var recognitionTask: SFSpeechRecognitionTask?
     private var analysisInProgress = false
+    private var fileAnalysisCompletion: ((Result<[String: Any], Error>) -> Void)?
     
-    init() {
+    override init() {
         // Initialize with US English locale
         recognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
+        super.init()
+    }
+    
+    // MARK: - SFSpeechRecognitionTaskDelegate
+    
+    func speechRecognitionTask(_ task: SFSpeechRecognitionTask, didHypothesizeTranscription transcription: SFTranscription) {
+        // We only care about final results, so we ignore interim transcriptions
+    }
+    
+    func speechRecognitionTask(_ task: SFSpeechRecognitionTask, didFinishRecognition result: SFSpeechRecognitionResult) {
+        // Extract analytics from the result
+        var analyticsData = processVoiceAnalytics(from: result)
+        
+        // Add transcription for reference
+        analyticsData["transcription"] = result.bestTranscription.formattedString
+        
+        // Publish analytics data or complete file analysis
+        if analysisInProgress {
+            analyticsSubject.send(analyticsData)
+        } else if let completion = fileAnalysisCompletion {
+            completion(.success(analyticsData))
+            fileAnalysisCompletion = nil
+        }
+    }
+    
+    func speechRecognitionTaskWasCancelled(_ task: SFSpeechRecognitionTask) {
+        if let completion = fileAnalysisCompletion {
+            completion(.failure(NSError(
+                domain: "VoiceAnalyticsService",
+                code: 3,
+                userInfo: [NSLocalizedDescriptionKey: "Recognition task was cancelled"]
+            )))
+            fileAnalysisCompletion = nil
+        }
+    }
+    
+    func speechRecognitionTask(_ task: SFSpeechRecognitionTask, didFinishSuccessfully successfully: Bool) {
+        if !successfully {
+            let error = NSError(
+                domain: "VoiceAnalyticsService",
+                code: 4,
+                userInfo: [NSLocalizedDescriptionKey: "Recognition task failed"]
+            )
+            
+            if analysisInProgress {
+                analyticsSubject.send(completion: .failure(error))
+            } else if let completion = fileAnalysisCompletion {
+                completion(.failure(error))
+                fileAnalysisCompletion = nil
+            }
+        }
     }
     
     // Analyze voice characteristics (pitch, jitter, shimmer) from recorded audio file
@@ -31,43 +83,24 @@ class VoiceAnalyticsService {
             return
         }
         
+        // Cancel any existing task
+        if recognitionTask != nil {
+            recognitionTask?.cancel()
+            recognitionTask = nil
+        }
+        
+        // Store completion handler
+        fileAnalysisCompletion = completion
+        analysisInProgress = false
+        
         // Create recognition request from audio file
         let request = SFSpeechURLRecognitionRequest(url: url)
         
-        // Configure for on-device recognition if available
-        if #available(iOS 13, *) {
-            request.requiresOnDeviceRecognition = true
-        }
+        // Configure for on-device recognition
+        request.requiresOnDeviceRecognition = true
         
-        // Start recognition task
-        recognitionTask = recognizer.recognitionTask(with: request) { [weak self] (result, error) in
-            guard let self = self else { return }
-            
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-            
-            guard let result = result else {
-                completion(.failure(NSError(
-                    domain: "VoiceAnalyticsService",
-                    code: 2,
-                    userInfo: [NSLocalizedDescriptionKey: "No results returned"]
-                )))
-                return
-            }
-            
-            // When we have the final result, extract voice analytics
-            if result.isFinal {
-                // Extract analytics from segments
-                var analyticsData = self.processVoiceAnalytics(from: result)
-                
-                // Add transcription for reference
-                analyticsData["transcription"] = result.bestTranscription.formattedString
-                
-                completion(.success(analyticsData))
-            }
-        }
+        // Start recognition task with self as delegate
+        recognitionTask = recognizer.recognitionTask(with: request, delegate: self)
     }
     
     // Real-time voice analytics processing
@@ -83,32 +116,17 @@ class VoiceAnalyticsService {
         
         let request = SFSpeechAudioBufferRecognitionRequest()
         
-        // Configure for on-device recognition if available
-        if #available(iOS 13, *) {
-            request.requiresOnDeviceRecognition = true
-        }
-        
+        // Configure for on-device recognition
+        request.requiresOnDeviceRecognition = true
         request.shouldReportPartialResults = true
         
-        // Start recognition task
-        recognitionTask = recognizer.recognitionTask(with: request) { [weak self] (result, error) in
-            guard let self = self else { return }
-            
-            if let error = error {
-                self.analyticsSubject.send(completion: .failure(error))
-                return
-            }
-            
-            if let result = result {
-                // Extract analytics data
-                let analyticsData = self.processVoiceAnalytics(from: result)
-                
-                // Publish the analytics data
-                self.analyticsSubject.send(analyticsData)
-            }
-        }
-        
+        // Set state for real-time analysis
         analysisInProgress = true
+        fileAnalysisCompletion = nil
+        
+        // Start recognition task with self as delegate
+        recognitionTask = recognizer.recognitionTask(with: request, delegate: self)
+        
         return request
     }
     

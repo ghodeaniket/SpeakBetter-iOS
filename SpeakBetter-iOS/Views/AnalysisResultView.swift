@@ -683,7 +683,8 @@ struct SpeechTimelineView: View {
             SpeechTimelineSegment(text: "This is", startTime: 0.0, endTime: 1.0, isFillerWord: false, pitch: 120.0, volume: 0.75),
             SpeechTimelineSegment(text: "um", startTime: 1.2, endTime: 1.5, isFillerWord: true, pitch: 115.0, volume: 0.6),
             SpeechTimelineSegment(text: "a sample speech", startTime: 1.6, endTime: 3.2, isFillerWord: false, pitch: 130.0, volume: 0.8)
-        ]
+        ],
+        metrics: ["wpmSource": "Manual calculation"]
     )
     
     let result = SpeechAnalysisResult(

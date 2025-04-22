@@ -3,7 +3,7 @@ import Speech
 import AVFoundation
 import Combine
 
-class SpeechRecognitionService {
+class SpeechRecognitionService: NSObject, SFSpeechRecognitionTaskDelegate {
     // Publishers for recognition results
     private let transcriptionSubject = PassthroughSubject<String, Error>()
     var transcriptionPublisher: AnyPublisher<String, Error> {
@@ -21,8 +21,108 @@ class SpeechRecognitionService {
     private var recognitionTask: SFSpeechRecognitionTask?
     private var audioEngine: AVAudioEngine?
     
+    // Properties for file-based recognition
+    private var fileRecognitionCompletion: ((Result<(String, Double?), Error>) -> Void)?
+    private var currentRecognitionMode: RecognitionMode = .live
+    
+    // Recognition modes
+    private enum RecognitionMode {
+        case live
+        case file
+    }
+    
     // Initialize service
-    init() {}
+    override init() {
+        super.init()
+    }
+    
+    // MARK: - SFSpeechRecognitionTaskDelegate methods
+    
+    // Called when recognition task produces interim results
+    func speechRecognitionTask(_ task: SFSpeechRecognitionTask, didHypothesizeTranscription transcription: SFTranscription) {
+        switch currentRecognitionMode {
+        case .live:
+            transcriptionSubject.send(transcription.formattedString)
+        case .file:
+            // For file recognition, we only care about final results
+            break
+        }
+    }
+    
+    // Called when recognition completes with final result
+    func speechRecognitionTask(_ task: SFSpeechRecognitionTask, didFinishRecognition recognitionResult: SFSpeechRecognitionResult) {
+        let transcription = recognitionResult.bestTranscription.formattedString
+        
+        // Calculate speaking rate manually from the transcription and duration
+        // In iOS 18, we need to calculate manually as the direct metadata access has changed
+        var speakingRate: Double? = nil
+        
+        // Calculate duration from segments if available
+        if let firstSegment = recognitionResult.bestTranscription.segments.first,
+           let lastSegment = recognitionResult.bestTranscription.segments.last {
+            
+            let duration = lastSegment.timestamp + lastSegment.duration - firstSegment.timestamp
+            if duration > 0 {
+                let words = transcription.split(separator: " ").count
+                // Convert to words per minute
+                speakingRate = Double(words) / (duration / 60.0)
+                print("Calculated speaking rate from segments: \(speakingRate ?? 0) WPM")
+            }
+        } else {
+            print("No segments available to calculate speaking rate")
+        }
+        
+        switch currentRecognitionMode {
+        case .live:
+            transcriptionSubject.send(transcription)
+        case .file:
+            if let completion = fileRecognitionCompletion {
+                completion(.success((transcription, speakingRate)))
+                fileRecognitionCompletion = nil
+            }
+        }
+    }
+    
+    // Called when task is canceled
+    func speechRecognitionTaskWasCancelled(_ task: SFSpeechRecognitionTask) {
+        switch currentRecognitionMode {
+        case .live:
+            recognitionStatusSubject.send(false)
+        case .file:
+            if let completion = fileRecognitionCompletion {
+                completion(.failure(NSError(
+                    domain: "SpeechRecognitionService",
+                    code: 4,
+                    userInfo: [NSLocalizedDescriptionKey: "Recognition task was cancelled"]
+                )))
+                fileRecognitionCompletion = nil
+            }
+        }
+    }
+    
+    // Called when there's an error
+    func speechRecognitionTask(_ task: SFSpeechRecognitionTask, didFinishSuccessfully successfully: Bool) {
+        if !successfully {
+            let error = NSError(
+                domain: "SpeechRecognitionService",
+                code: 3,
+                userInfo: [NSLocalizedDescriptionKey: "Recognition task failed"]
+            )
+            
+            switch currentRecognitionMode {
+            case .live:
+                transcriptionSubject.send(completion: .failure(error))
+                recognitionStatusSubject.send(false)
+            case .file:
+                if let completion = fileRecognitionCompletion {
+                    completion(.failure(error))
+                    fileRecognitionCompletion = nil
+                }
+            }
+        } else if currentRecognitionMode == .live {
+            recognitionStatusSubject.send(false)
+        }
+    }
     
     // Start real-time speech recognition
     func startLiveRecognition() {
@@ -78,25 +178,11 @@ class SpeechRecognitionService {
             transcriptionSubject.send(completion: .failure(error))
             return
         }
+        // Set recognition mode to live
+        currentRecognitionMode = .live
         
-        // Start recognition task
-        recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest) { [weak self] result, error in
-            guard let self = self else { return }
-            
-            if let error = error {
-                self.audioEngine?.stop()
-                self.audioEngine?.inputNode.removeTap(onBus: 0)
-                self.recognitionRequest = nil
-                self.recognitionTask = nil
-                self.recognitionStatusSubject.send(false)
-                self.transcriptionSubject.send(completion: .failure(error))
-                return
-            }
-            
-            if let result = result {
-                self.transcriptionSubject.send(result.bestTranscription.formattedString)
-            }
-        }
+        // Start recognition task using delegate
+        recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest, delegate: self)
     }
     
     // Stop real-time recognition
@@ -113,30 +199,33 @@ class SpeechRecognitionService {
     }
     
     // Recognize speech from audio file
-    func recognizeSpeechFromFile(url: URL, completion: @escaping (Result<String, Error>) -> Void) {
+    func recognizeSpeechFromFile(url: URL, completion: @escaping (Result<(String, Double?), Error>) -> Void) {
         let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
         guard let speechRecognizer = recognizer, speechRecognizer.isAvailable else {
             completion(.failure(NSError(domain: "SpeechRecognitionService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Speech recognition not available"])))
             return
         }
         
+        // Cancel any existing task
+        if recognitionTask != nil {
+            recognitionTask?.cancel()
+            recognitionTask = nil
+        }
+        
+        // Set mode and store the completion handler
+        currentRecognitionMode = .file
+        fileRecognitionCompletion = completion
+        
+        // Create and configure the request
         let request = SFSpeechURLRecognitionRequest(url: url)
         request.shouldReportPartialResults = false
         
-        speechRecognizer.recognitionTask(with: request) { result, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-            
-            if let result = result {
-                completion(.success(result.bestTranscription.formattedString))
-            }
-        }
+        // Start recognition with self as delegate
+        recognitionTask = speechRecognizer.recognitionTask(with: request, delegate: self)
     }
     
     // Analyze speech for specific metrics
-    func analyzeSpeech(transcription: String, duration: TimeInterval) -> [String: Any] {
+    func analyzeSpeech(transcription: String, duration: TimeInterval, apiSpeakingRate: Double? = nil) -> [String: Any] {
         var metrics: [String: Any] = [:]
         
         // Count words
@@ -144,8 +233,17 @@ class SpeechRecognitionService {
         metrics["wordCount"] = words.count
         
         // Calculate words per minute
-        let minutes = duration / 60.0
-        let wordsPerMinute = minutes > 0 ? Double(words.count) / minutes : 0
+        // Use API-provided speaking rate if available, otherwise calculate manually
+        let wordsPerMinute: Double
+        if let apiRate = apiSpeakingRate {
+            wordsPerMinute = apiRate
+            print("Using API-provided speaking rate in analyzeSpeech: \(apiRate) WPM")
+        } else {
+            // Fall back to manual calculation
+            let minutes = duration / 60.0
+            wordsPerMinute = minutes > 0 ? Double(words.count) / minutes : 0
+            print("Using manually calculated speaking rate in analyzeSpeech: \(wordsPerMinute) WPM")
+        }
         metrics["wordsPerMinute"] = wordsPerMinute
         
         // Count filler words

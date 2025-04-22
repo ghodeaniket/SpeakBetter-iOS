@@ -144,12 +144,22 @@ struct SessionSummaryView: View {
             GridItem(.flexible()),
             GridItem(.flexible())
         ]) {
-            metricItem(
-                value: "\(Int(result.speechData.wordsPerMinute))",
-                label: "WPM",
-                icon: "speedometer",
-                color: colorForRating(result.paceRating)
-            )
+            VStack {
+                metricItem(
+                    value: "\(Int(result.speechData.wordsPerMinute))",
+                    label: "WPM",
+                    icon: "speedometer",
+                    color: colorForRating(result.paceRating)
+                )
+                
+                // Small debug info about WPM source
+                if let wpmSource = result.speechData.metrics?["wpmSource"] as? String {
+                    Text("(\(wpmSource))")
+                        .font(.system(size: 6))
+                        .foregroundColor(.gray)
+                        .padding(.top, -5)
+                }
+            }
             
             metricItem(
                 value: "\(result.speechData.fillerWordCount)",
@@ -258,7 +268,8 @@ struct SessionSummaryView_Previews: PreviewProvider {
             pitch: 125.0,
             pitchVariability: 12.5,
             voicingPercentage: 0.82,
-            speechTimeline: []
+            speechTimeline: [],
+            metrics: ["wpmSource": "Manual calculation"]
         )
         
         let result = SpeechAnalysisResult(
