@@ -4,6 +4,8 @@ struct AnalysisResultView: View {
     let result: SpeechAnalysisResult
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTab = 0
+    @State private var showFeedbackView = false
+    @StateObject private var feedbackViewModel = FeedbackViewModel()
     
     private let tabTitles = ["Summary", "Details", "Transcript"]
     
@@ -77,15 +79,31 @@ struct AnalysisResultView: View {
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             
-            // Done button
-            Button("Done") {
-                dismiss()
+            // Action buttons
+            HStack {
+                Button("Done") {
+                    dismiss()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                
+                Spacer()
+                
+                Button(action: {
+                    showFeedbackView = true
+                }) {
+                    Label("AI Voice Feedback", systemImage: "message.and.waveform.fill")
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .frame(maxWidth: .infinity)
             .padding()
             .background(Color(.systemBackground))
+            .fullScreenCover(isPresented: $showFeedbackView) {
+                FeedbackView(analysisResult: result, onDismiss: {
+                    showFeedbackView = false
+                })
+            }
         }
         .edgesIgnoringSafeArea(.bottom)
     }
@@ -96,6 +114,17 @@ struct AnalysisResultView: View {
     private var summaryView: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                // Session Summary View
+                SessionSummaryView(result: result, feedbackViewModel: feedbackViewModel)
+                
+                Divider()
+                    .padding(.vertical, 8)
+                
+                // Legacy feedback display for comparison
+                Text("Analysis Details")
+                    .font(.headline)
+                    .padding(.leading, 4)
+                
                 // Metrics summary
                 MetricsCardView(
                     title: "Speech Metrics",
@@ -107,62 +136,36 @@ struct AnalysisResultView: View {
                     ]
                 )
                 
-                // Feedback
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Key Observations")
-                        .font(.headline)
-                    
-                    ForEach(result.feedbackPoints, id: \.self) { point in
-                        FeedbackItemView(iconName: "checkmark.circle", color: .blue, text: point)
-                    }
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(16)
-                
-                // Suggestions
-                if !result.suggestions.isEmpty {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Suggestions for Improvement")
+                // Comparison of feedback approaches
+                Button(action: {
+                    showFeedbackView = true
+                }) {
+                    VStack(alignment: .center, spacing: 12) {
+                        Image(systemName: "mic.circle.fill")
+                            .font(.system(size: 32))
+                            .foregroundColor(.accentColor)
+                        
+                        Text("Experience AI Voice Coaching")
                             .font(.headline)
                         
-                        ForEach(result.suggestions, id: \.self) { suggestion in
-                            FeedbackItemView(iconName: "lightbulb", color: .yellow, text: suggestion)
-                        }
+                        Text("Get personalized vocal feedback with our AI coach")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
                     }
+                    .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color(.systemGray6))
                     .cornerRadius(16)
                 }
-                
-                // Recording info
-                HStack {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Label(formattedDuration, systemImage: "clock")
-                            .font(.subheadline)
-                        
-                        Label("\(Int(result.speechData.wordsPerMinute)) words per minute", systemImage: "text.word.spacing")
-                            .font(.subheadline)
-                    }
-                    
-                    Spacer()
-                    
-                    VStack(alignment: .trailing, spacing: 5) {
-                        Label("\(calculateWordCount()) words", systemImage: "character.textbox")
-                            .font(.subheadline)
-                        
-                        Label("\(Int(result.speechData.fillerWordCount)) filler words", systemImage: "textformat.abc")
-                            .font(.subheadline)
-                    }
-                }
-                .foregroundColor(.secondary)
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(16)
             }
             .padding()
         }
         .background(Color(.systemGroupedBackground))
+        .onAppear {
+            // Process feedback when the view appears
+            feedbackViewModel.processFeedback(from: result)
+        }
     }
     
     // Details Tab

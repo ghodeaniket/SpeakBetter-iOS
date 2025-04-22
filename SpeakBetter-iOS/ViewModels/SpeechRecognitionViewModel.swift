@@ -19,6 +19,7 @@ class SpeechRecognitionViewModel: ObservableObject {
     private let speechRecognitionService = SpeechRecognitionService()
     private let speechAnalysisService = SpeechAnalysisService()
     private let voiceAnalyticsService = VoiceAnalyticsService()
+    private let feedbackService = FeedbackService()
     
     // Private properties
     private var cancellables = Set<AnyCancellable>()
@@ -226,6 +227,11 @@ class SpeechRecognitionViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self.analysisResult = result
                 self.isAnalyzing = false
+                
+                // We'll wait a moment before offering voice feedback
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    self.promptVoiceFeedback()
+                }
             }
         }
     }
@@ -271,5 +277,60 @@ class SpeechRecognitionViewModel: ObservableObject {
             self.audioLevel = 0.0
             self.currentAudioData = nil
         }
+    }
+    
+    // MARK: - Voice Feedback
+    
+    /// Prompt user if they want to hear vocal feedback
+    private func promptVoiceFeedback() {
+        // This would typically show a UI alert or notification
+        // For the POC, we could automatically start feedback for testing purposes
+        // In a production app, we would ask the user before starting vocal feedback
+        
+        // For testing, we can automatically provide a brief vocal feedback on key metrics
+        if let result = analysisResult {
+            provideBriefVocalFeedback(result)
+        }
+    }
+    
+    /// Provide a brief vocal summary of the analysis
+    func provideBriefVocalFeedback(_ result: SpeechAnalysisResult) {
+        let feedbackText = "Your speaking score is \(result.overallScore) out of 100. " +
+                          "You spoke at \(Int(result.speechData.wordsPerMinute)) words per minute, which is \(result.paceRating.lowercased()). " +
+                          "I detected \(result.speechData.fillerWordCount) filler words."
+        
+        let utterance = AVSpeechUtterance(string: feedbackText)
+        
+        // Configure voice
+        if let voice = AVSpeechSynthesisVoice(identifier: "com.apple.ttsbundle.Samantha-premium") {
+            utterance.voice = voice
+        } else if let voice = AVSpeechSynthesisVoice(language: "en-US") {
+            utterance.voice = voice
+        }
+        
+        // Configure parameters
+        utterance.rate = 0.5
+        utterance.pitchMultiplier = 1.0
+        utterance.volume = 1.0
+        
+        // Speak feedback
+        feedbackService.speakFeedbackPoint(
+            FeedbackPoint(
+                category: .pace,
+                text: feedbackText,
+                priority: 5
+            )
+        )
+    }
+    
+    /// Provide full vocal feedback via FeedbackView
+    func provideFullVocalFeedback() {
+        guard let result = analysisResult else { return }
+        
+        // Generate structured feedback
+        let _ = feedbackService.generateFeedback(from: result)
+        
+        // Speak the feedback
+        feedbackService.speakFeedback(from: result)
     }
 }
